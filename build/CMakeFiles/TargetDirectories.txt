@@ -1,0 +1,6 @@
+/home/solomon/Downloads/repos/ServerProxy/build/CMakeFiles/my_project.dir
+/home/solomon/Downloads/repos/ServerProxy/build/CMakeFiles/edit_cache.dir
+/home/solomon/Downloads/repos/ServerProxy/build/CMakeFiles/rebuild_cache.dir
+/home/solomon/Downloads/repos/ServerProxy/build/data_structures/CMakeFiles/data_structures.dir
+/home/solomon/Downloads/repos/ServerProxy/build/data_structures/CMakeFiles/edit_cache.dir
+/home/solomon/Downloads/repos/ServerProxy/build/data_structures/CMakeFiles/rebuild_cache.dir

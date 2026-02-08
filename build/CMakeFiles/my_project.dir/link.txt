@@ -1,0 +1,1 @@
+/usr/bin/cc -Wl,--dependency-file=CMakeFiles/my_project.dir/link.d CMakeFiles/my_project.dir/main.c.o CMakeFiles/my_project.dir/server.c.o CMakeFiles/my_project.dir/worker.c.o CMakeFiles/my_project.dir/static_files.c.o CMakeFiles/my_project.dir/http.c.o -o my_project  data_structures/libdata_structures.a

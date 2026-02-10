@@ -4,21 +4,19 @@
     Author       : Solomon
 */
 
-#define _GNU_SOURCE
+#define _GNU_SOURCE     // enables GNU extension for accept4() and some flags like SOCK_NONBLOCK, SOCK_CLOEXEC
 
-#include <fcntl.h>
-#include <stdint.h>
-#include <errno.h>
+#include <fcntl.h>      // provides O_NONBLOCK O_CLOEXEC
+#include <stdint.h>     // provides uint32_t
+#include <errno.h>      // provides errno, EINTR
 #include "worker.h"
 #include "server.h"
-#include "http.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <sys/epoll.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
+#include <sys/socket.h> // provides accept4(), recv(), send(), struct sockaddr
+#include <netinet/in.h> // provides IPv4 socket structures like struct sockaddr_in
+#include <sys/epoll.h>  // provides epoll_create1(),  epoll_wait(), struct epoll_event, EPOLLIN, EPOLLERR, EPOLLHUP, EPOLLRDHUP
+#include <stdio.h>      // provides snprintf()
+#include <string.h>     // provides memset(), strlen()
+#include <signal.h>     // signal(), SIGTERM, SIGINT, SIGPIPE, sig_atomic_t
 
 static volatile sig_atomic_t g_Running = 1;
 
@@ -105,7 +103,7 @@ void worker_run(struct SERVER* s_pServer)
 
                 buffer[n] = '\0';
 
-                const char body[] = "Hello World\n";
+                const char body[] = "test successful";
                 char response[256];
 
                 snprintf(response, sizeof(response),

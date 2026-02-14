@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/solomon/Downloads/repos/ServerProxy/build/cmake_install.cmake",
-		"/home/solomon/Downloads/repos/ServerProxy/build/data_structures/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

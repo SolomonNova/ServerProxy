@@ -20,6 +20,8 @@ extern volatile sig_atomic_t g_master_running;
 
 /*===================================== Set up the Master ======================================*/
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 SERVER server_create
 (
     int           iDomain,
@@ -46,6 +48,8 @@ SERVER server_create
     return s_Server;
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 int server_setup_listener(SERVER* s_pServer)
 {
     s_pServer->m_iListenFd = socket(
@@ -56,12 +60,16 @@ int server_setup_listener(SERVER* s_pServer)
 
     if (s_pServer->m_iListenFd < 0) return -1;
 
+    // 1) Get the current flag of the socket
     int iFlags = fcntl(s_pServer->m_iListenFd, F_GETFL, 0);
     if (iFlags < 0) return -1;
 
+    // 2) Add the non blocking Macro into the socket
     if (fcntl(s_pServer->m_iListenFd, F_SETFL, iFlags | O_NONBLOCK) < 0)
         return -1;
 
+    // the server can bind to the same IP:port even if the previous connection 
+    // on that port is in TIME_WAIT state.
     int iOpt = 1;
     if (setsockopt(
             s_pServer->m_iListenFd,
@@ -70,13 +78,15 @@ int server_setup_listener(SERVER* s_pServer)
             &iOpt,
             sizeof(iOpt)) < 0)
         return -1;
-
+    
+    // bind the socket to an ip address and a port number
     if (bind(
             s_pServer->m_iListenFd,
             (struct sockaddr*)&s_pServer->m_si_address,
             sizeof(s_pServer->m_si_address)) < 0)
         return -1;
 
+    // start listening to the socket for any incoming requests
     if (listen(
             s_pServer->m_iListenFd,
             s_pServer->m_iBacklog) < 0)
@@ -85,6 +95,8 @@ int server_setup_listener(SERVER* s_pServer)
     return 0;
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 int server_spawn_workers(SERVER* s_pServer)
 {
     if (!s_pServer) return -1;
@@ -106,6 +118,8 @@ int server_spawn_workers(SERVER* s_pServer)
     return 0;  
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 void server_master_loop(SERVER* s_pServer)
 {
     if (!s_pServer) return;    
@@ -138,6 +152,8 @@ void server_master_loop(SERVER* s_pServer)
     }
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 void server_shutdown(SERVER* s_pServer)
 {
     if (!s_pServer) return;
@@ -156,6 +172,7 @@ void server_shutdown(SERVER* s_pServer)
         if (pid <= 0) continue;
 
         int iStatus;
+        // 0 in waitpid() means block until a child exits
         while (waitpid(pid, &iStatus, 0) == -1)
         {
             if (errno != EINTR) break;

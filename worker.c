@@ -40,7 +40,7 @@ void worker_run(struct SERVER* s_pServer)
 
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN; // tells epoll that the socket has something to read
     ev.data.fd = s_pServer->m_iListenFd;
 
     if (epoll_ctl(iEpollFd, EPOLL_CTL_ADD, s_pServer->m_iListenFd, &ev) < 0)
@@ -61,7 +61,11 @@ void worker_run(struct SERVER* s_pServer)
         {
             int iFd = events[iX].data.fd;
             uint32_t uEv = events[iX].events;
-
+            
+            // if returned flag has any of the three
+            // EPOLLERR -> socket has pending error
+            // EPOLLHUP -> connection closed
+            // EPOLLRDHUP -> peer performed shutdown
             if (uEv & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 epoll_ctl(iEpollFd, EPOLL_CTL_DEL, iFd, NULL);
@@ -80,7 +84,10 @@ void worker_run(struct SERVER* s_pServer)
                     &clientLen,
                     SOCK_NONBLOCK | SOCK_CLOEXEC
                 );
-
+                
+                // make an epoll instance of the client
+                // EPOLLIN -> notify when client sends data
+                // EPOLLRDHUP -> notify when clients closes its read / write or finished sending the request
                 if (iClientFd >= 0)
                 {
                     struct epoll_event cev;

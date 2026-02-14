@@ -73,10 +73,34 @@ int  server_spawn_workers (SERVER* s_pServer); // fork worker
 void server_master_loop   (SERVER* s_pServer);
 void server_shutdown      (SERVER* s_pServer);
 
-/*============================== Worker Control (called by master) ==============================*/
-pid_t spawn_single_worker(SERVER* s_pServer);
-void  respawn_worker     (SERVER* s_pServer, int index); // respawns the worker if it dies
-
-/*========================================== Utility ============================================*/
-
 #endif
+
+/*
+ 
+server_create()         -> creates and fills most values of the SERVER struct variable
+server_setup_listener() -> attaches a listening socket to the listening socket varialble of the SERVER and sets it to non blocking and starts listening to it
+server_spawn_workers()  -> spawns N number of workers that will respond to the requests on the listening socket
+server_master_loop()    -> respawns any worker if it dies and replaces it pid in the SERVER struct's variable 
+server_shutdown()       -> kills all the workers and shuts down the listening socket
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+

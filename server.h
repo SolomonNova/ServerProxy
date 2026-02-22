@@ -1,6 +1,6 @@
 /*
     File name: server.h
-    Createad at: 06-12-2025
+    Created at: 06-12-2025
     Author: Solomon
 */
 
@@ -17,20 +17,20 @@
 /*
 * @brief Represents a server configuration
 * 
-* @param - domain      Address faimly (AF_INET, AF_INET6)    -> tells which ip version to use in the server.
+* @param - domain      Address family (AF_INET, AF_INET6)    -> tells which ip version to use in the server.
 
 * @param - service     Socket type (SOCK_STREAM, SOCK_DGRAM) -> SOCK_STREAM type socket is always used with TCP, SOCK_DGRAM is always used with UDP.
 
 * @param - protocol    Protocol (IPPROTO_TCP, IPPROTO_UDP)   -> protocol to be used, either TCP or UDP.
 
-* @param - interface   Inteface Address (INADDR_ANY)         -> tells which network inteface in this system must the server be bound to.
+* @param - interface   Interface Address (INADDR_ANY)         -> tells which network interface in this system must the server be bound to.
 
 * @param - port        Port number                           -> Identifies unique service bounded to this number, there can be many ports in a system
                                                                 each running a different.
 
 * @param - address     struct sockaddr_in type address       -> Tells the OS, which address family (IPv4) server belongs to,
                                                                 port number being which the server will listen to,
-                                                                IP address of the network inteface that the port is attached on.
+                                                                IP address of the network interface that the port is attached on.
 
 * @param - backlog     backlog number                        -> is the number of pending connections the kernel will queue after listen()
                                                                 but before your server calls accept().
@@ -78,29 +78,10 @@ void server_shutdown      (SERVER* s_pServer);
 /*
  
 server_create()         -> creates and fills most values of the SERVER struct variable
-server_setup_listener() -> attaches a listening socket to the listening socket varialble of the SERVER and sets it to non blocking and starts listening to it
+server_setup_listener() -> attaches a listening socket to the listening socket variable of the SERVER and sets it to non blocking and starts listening to it
 server_spawn_workers()  -> spawns N number of workers that will respond to the requests on the listening socket
 server_master_loop()    -> respawns any worker if it dies and replaces it pid in the SERVER struct's variable 
 server_shutdown()       -> kills all the workers and shuts down the listening socket
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 */
 

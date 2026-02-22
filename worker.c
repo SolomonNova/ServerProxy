@@ -11,6 +11,7 @@
 #include <errno.h>      // provides errno, EINTR
 #include "worker.h"
 #include "server.h"
+#include "http.h"
 #include <sys/socket.h> // provides accept4(), recv(), send(), struct sockaddr
 #include <netinet/in.h> // provides IPv4 socket structures like struct sockaddr_in
 #include <sys/epoll.h>  // provides epoll_create1(),  epoll_wait(), struct epoll_event, EPOLLIN, EPOLLERR, EPOLLHUP, EPOLLRDHUP
@@ -109,6 +110,19 @@ void worker_run(struct SERVER* s_pServer)
                 }
 
                 buffer[n] = '\0';
+
+                /* --------------- parse request and print to terminal --------------- */
+                REQUEST_INFO ri;
+                PARSE_RESULT pres = launch_parser(&ri, buffer, (size_t)n);
+                if (pres != PARSE_SUCCESS)
+                {
+                    // print a brief parse failure notice; do not change response behavior
+                    fprintf(stderr, "launch_parser() failed: %d\n", (int)pres);
+                }
+                print_request_info(&ri);
+                /* free parser-owned allocations (headers array, decoded chunk body if any) */
+                free_request_info(&ri);
+                /* ------------------------------------------------------------------ */
 
                 const char body[] = "test successful";
                 char response[256];

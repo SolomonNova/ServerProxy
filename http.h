@@ -27,6 +27,24 @@
  * - Parser NEVER frees the raw buffer passed by the worker.
  */
 
+/* ---------------- Parse result codes ---------------- */
+
+typedef enum {
+    PARSE_SUCCESS = 0,
+    ERR_NULL_CHECK_FAILED,
+    ERR_EMPTY_REQUEST,
+    ERR_INVALID_METHOD,
+    ERR_INVALID_PATH,
+    ERR_INVALID_PROTOCOL,
+    ERR_CALLOC_FAILED,
+    ERR_INVALID_FORMAT,
+    ERR_OUT_OF_BOUNDS,
+    ERR_REQUEST_LINE_PARSE_FAILED,
+    ERR_HEADERS_PARSE_FAILED,
+    ERR_BODY_PARSE_FAILED,
+    ERR_UNSUPPORTED_TRANSFER_ENCODING,
+} PARSE_RESULT;
+
 /* ---------------- Headers / Key-Value ---------------- */
 
 typedef struct HEADER_KEY_VALUE
@@ -74,25 +92,10 @@ typedef struct REQUEST_INFO {
     /* Flags describing ownership / body form */
     bool m_is_chunked;               /* Transfer-Encoding: chunked was present */
     bool m_body_is_heap_allocated;    /* true if m_szBody was heap-allocated (decoded chunked body) */
+
+    // status of the http request
+    PARSE_RESULT m_parseResult;
 } REQUEST_INFO;
-
-/* ---------------- Parse result codes ---------------- */
-
-typedef enum {
-    PARSE_SUCCESS = 0,
-    ERR_NULL_CHECK_FAILED,
-    ERR_EMPTY_REQUEST,
-    ERR_INVALID_METHOD,
-    ERR_INVALID_PATH,
-    ERR_INVALID_PROTOCOL,
-    ERR_CALLOC_FAILED,
-    ERR_INVALID_FORMAT,
-    ERR_OUT_OF_BOUNDS,
-    ERR_REQUEST_LINE_PARSE_FAILED,
-    ERR_HEADERS_PARSE_FAILED,
-    ERR_BODY_PARSE_FAILED,
-    ERR_UNSUPPORTED_TRANSFER_ENCODING,
-} PARSE_RESULT;
 
 /* ===================== Public API ===================== */
 

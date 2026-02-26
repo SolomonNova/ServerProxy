@@ -10,23 +10,27 @@
 #include <stdint.h>     // provides uint32_t
 #include <errno.h>      // provides errno, EINTR
 #include "worker.h"
-#include "server.h"
-#include "http.h"
 #include <sys/socket.h> // provides accept4(), recv(), send(), struct sockaddr
 #include <netinet/in.h> // provides IPv4 socket structures like struct sockaddr_in
 #include <sys/epoll.h>  // provides epoll_create1(),  epoll_wait(), struct epoll_event, EPOLLIN, EPOLLERR, EPOLLHUP, EPOLLRDHUP
 #include <stdio.h>      // provides snprintf()
 #include <string.h>     // provides memset(), strlen()
 #include <signal.h>     // signal(), SIGTERM, SIGINT, SIGPIPE, sig_atomic_t
+#include "server.h"
+#include "http.h"
 
 static volatile sig_atomic_t g_Running = 1;
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 static void worker_on_signal(int sig)
 {
     (void)sig;
     g_Running = 0;
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 void worker_run(struct SERVER* s_pServer)
 {
     if (!s_pServer) return;
@@ -112,16 +116,20 @@ void worker_run(struct SERVER* s_pServer)
                 buffer[n] = '\0';
 
                 /* --------------- parse request and print to terminal --------------- */
-                REQUEST_INFO ri;
-                PARSE_RESULT pres = launch_parser(&ri, buffer, (size_t)n);
-                if (pres != PARSE_SUCCESS)
+                REQUEST_INFO ri = { 0 };
+
+                PARSE_RESULT rc = launch_parser(&ri, buffer, n);
+                if (rc != PARSE_SUCCESS)
                 {
-                    // print a brief parse failure notice; do not change response behavior
-                    fprintf(stderr, "launch_parser() failed: %d\n", (int)pres);
+                    send_parse_error_response(fd, &ri);
+                    free_request_info(&ri);
+                    return;
                 }
-                print_request_info(&ri);
-                /* free parser-owned allocations (headers array, decoded chunk body if any) */
+
+                /* here normal request handling begins */
+                handle_application_request(fd, &ri);
                 free_request_info(&ri);
+
                 /* ------------------------------------------------------------------ */
 
                 const char body[] = "test successful";
@@ -145,4 +153,14 @@ void worker_run(struct SERVER* s_pServer)
     }
 
     close(iEpollFd);
+}
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+void handle_application_request(int iClientFd, const REQUEST_INFO *ri)
+{
+    if (iClientFd < 0 || !ri) return;
+
+    // Only GET method is supported
+    // TO BE COMPLETED    
 }

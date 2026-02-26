@@ -4,14 +4,16 @@
     Author       : Solomon
 */
 
-#pragma once
 #ifndef WORKER_H
 #define WORKER_H
 
 
 // forward deceleration 
 typedef struct SERVER SERVER;
+typedef struct REQUEST_INFO REQUEST_INFO;
 
-void worker_run(struct SERVER* s_pServer);
+
+void worker_run(SERVER* s_pServer);
+void handle_application_request(int iClientFd, const REQUEST_INFO *ri);
 
 #endif 

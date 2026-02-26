@@ -79,7 +79,10 @@ PARSE_RESULT launch_parser
     size_t        bytestream_len
 )
 {
-    if (!ri || !pBytestream) return ERR_NULL_CHECK_FAILED;
+    if (!ri || !pBytestream) {
+        if (ri) ri->m_parseResult = ERR_NULL_CHECK_FAILED;
+        return ERR_NULL_CHECK_FAILED;
+    }
 
     /* Initialize REQUEST_INFO fields conservatively so parser can own allocations */
     ri->m_pRawRequest            = pBytestream;
@@ -108,15 +111,31 @@ PARSE_RESULT launch_parser
     ri->m_is_chunked             = false;
     ri->m_body_is_heap_allocated = false;
 
+    /* initialize parse result to success; parser stages will overwrite on error */
+    ri->m_parseResult = PARSE_SUCCESS;
+
     /* parse stages (each uses ri->m_pRawRequest directly) */
-    if (parse_request_line(ri) != PARSE_SUCCESS)
-        return ERR_REQUEST_LINE_PARSE_FAILED;
+    PARSE_RESULT rc;
 
-    if (parse_headers(ri) != PARSE_SUCCESS)
-        return ERR_HEADERS_PARSE_FAILED;
+    rc = parse_request_line(ri);
+    if (rc != PARSE_SUCCESS) {
+        ri->m_parseResult = rc;
+        return rc;
+    }
 
-    if (parse_body(ri) != PARSE_SUCCESS)
-        return ERR_BODY_PARSE_FAILED;
+    rc = parse_headers(ri);
+    if (rc != PARSE_SUCCESS) {
+        ri->m_parseResult = rc;
+        return rc;
+    }
+
+    rc = parse_body(ri);
+    if (rc != PARSE_SUCCESS) {
+        ri->m_parseResult = rc;
+        return rc;
+    }
+
+    ri->m_parseResult = PARSE_SUCCESS;
 
     print_request_info(ri);
 
@@ -545,6 +564,9 @@ void free_request_info
     ri->m_szMethod = NULL;
     ri->m_szPath = NULL;
     ri->m_szVersion = NULL;
+
+    /* reset parse result to safe default */
+    ri->m_parseResult = PARSE_SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

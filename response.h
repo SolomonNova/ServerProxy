@@ -27,11 +27,14 @@ typedef enum
     RESPONSE_FAIL_SERVER_ERROR,
     RESPONSE_FAIL_NO_CONTENT,
 } RESPONSE_RESULT;
-
+/* ---------------------------------- Main Functions --------------------------------------- */
 int initialize_response_header_buffer(REQUEST_INFO* ri_requestInfo);
 int write_status_line                (REQUEST_INFO* ri_requestInfo, char* buffer, size_t iOffset);
 int write_headers                    (REQUEST_INFO* ri_requestInfo, char* buffer, size_t iOffset);
 int write_final_crlf                 (REQUEST_INFO* ri_requestInfo, char* buffer, size_t iOffset);
 
+/* ---------------------------------- Helper Functions --------------------------------------- */
+void send_parse_error_response(int iClientFd, const REQUEST_INFO* ri);
+void send_simple_response     (int iClientFd, const REQUEST_INFO* ri, int iStatus, const char* szReasonPhrase, const char* pBody, size_t bodyLen);
 
 #endif

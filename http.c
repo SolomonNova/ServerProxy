@@ -4,10 +4,10 @@
     Author: Solomon
 */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <string.h>  // provides memcmp(), strcmp()
+#include <stdio.h>   // provides printf()
+#include <stdbool.h> // provides bool type
+#include <stdlib.h>  // all dynamic memory allocation
 #include "http.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

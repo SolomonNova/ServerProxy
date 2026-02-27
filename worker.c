@@ -18,6 +18,7 @@
 #include <signal.h>     // signal(), SIGTERM, SIGINT, SIGPIPE, sig_atomic_t
 #include "server.h"
 #include "http.h"
+#include "response.h"   // provides send_simple_response
 
 static volatile sig_atomic_t g_Running = 1;
 
@@ -121,13 +122,13 @@ void worker_run(struct SERVER* s_pServer)
                 PARSE_RESULT rc = launch_parser(&ri, buffer, n);
                 if (rc != PARSE_SUCCESS)
                 {
-                    send_parse_error_response(fd, &ri);
+                    send_parse_error_response(iFd, &ri);
                     free_request_info(&ri);
                     return;
                 }
 
                 /* here normal request handling begins */
-                handle_application_request(fd, &ri);
+                handle_application_request(iFd, &ri);
                 free_request_info(&ri);
 
                 /* ------------------------------------------------------------------ */
@@ -159,8 +160,27 @@ void worker_run(struct SERVER* s_pServer)
 ////////////////////////////////////////////////////////////
 void handle_application_request(int iClientFd, const REQUEST_INFO *ri)
 {
-    if (iClientFd < 0 || !ri) return;
+    /* Only GET method is suppored */
+    if (strcmp(ri->m_szMethod, "GET") != 0)
+    {
+        send_simple_response(iClientFd, ri, 405, "Method Not Allowed", NULL, 0);
+        return;
+    }
 
-    // Only GET method is supported
-    // TO BE COMPLETED    
+    if (strcmp(ri->m_szPath, "/") == 0)
+    {
+        const char body[] = "Hello, world\n";
+        send_simple_response(
+            iClientFd,
+            ri,
+            200,
+            "OK",
+            body,
+            sizeof(body) - 1
+        );
+        return;
+    }
+
+    /* default */
+    send_simple_response(iClientFd, ri, 404, "Not Found", NULL, 0);
 }

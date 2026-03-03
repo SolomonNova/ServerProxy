@@ -4,13 +4,16 @@
     Author: Solomon
 */
 
+#include <cstddef>
+#include <iterator>
 #include <stddef.h>     // provides size_t
 #include <stdio.h>      // provides snprintf()
-#include <string.h>     
+#include <string.h>     // provides strcmp(), strncasecmp()
+#include <strings.h>
 #include <sys/socket.h> // provides send()
 #include "response.h"   // provides REQUEST_INFO
+#include <time.h>       // provides type time_t, struct tm, gmtime_r(), strftime()
 #include "http.h"       // provides REQUEST_INFO
-
 
 #define MAX_RESPONSE_HEADER_SIZE 4096
 
@@ -140,6 +143,17 @@ void send_simple_response
     }
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+static int header_key_eq(const char *a, const char *b)
+{
+    /* Helper: case-insensitive header key compare (exact match) */
+    if (!a || !b) return 0;
+    size_t la = strlen(a);
+    size_t lb = strlen(b);
+    if (la != lb) return 0;
+    return (strncasecmp(a, b, la) == 0);
+}
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -212,11 +226,129 @@ int write_status_line(REQUEST_INFO* ri, char* buffer, size_t iOffset)
     return (int)(iOffset + (size_t)wrote);
 }
 
-
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 int write_heades(REQUEST_INFO* ri, char* buffer, size_t iOffset)
 {
-    if (!ri || !buffer || iOffset <= 0) return -1;
+    if (!ri || !buffer) return -1;
     
+    size_t offset = iOffset;
+    size_t iRemaning = (MAX_RESPONSE_HEADER_SIZE > iOffset) ? (MAX_RESPONSE_HEADER_SIZE - iOffset) : 0;
+    if (iRemaning == 0) return -1;
+    
+    int iWrote;
+ 
+    // 1) write the Date header
+    // syntax for Date header is -> Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
+    
+    /*--------------------------------------- Date Header --------------------------------------*/
+    {
+        time_t now = time(NULL);
+        struct tm gm; // gm means `GreenWich Mean` which is now called UTC time, tm means time components
+        
+        if (gmtime_r(&now, &gm) == NULL) return -1;
+
+        char dateBuffer[64];
+        // strftime() means string format time, fills dateBuffer with string values of time using gm
+        if (strftime(dateBuffer, sizeof(dateBuffer), "%a, %d %b %Y %H:%M:%S GMT", &gm) == 0)
+            return -1;
+
+        iWrote = snprintf(buffer + offset, iRemaning, "Date: %s\r\n", dateBuffer);
+        if (iWrote < 0 || (size_t)iWrote > iRemaning) return -1;
+        offset += (size_t)iWrote;
+        iRemaning += (size_t)iWrote;
+    }
+    /*------------------------------------------------------------------------------------------*/
+
+    // 2) Write Server header 
+    /*--------------------------------------- Server header --------------------------------------*/
+    {
+        const char* szServerHeader = "Server: Solomon/1.0\r\n";
+        size_t iHeaderLen = strlen(szServerHeader);
+
+        if (iHeaderLen >= iRemaning) return -1;
+        memcpy(buffer + offset, szServerHeader, iHeaderLen);
+        offset += iHeaderLen;
+        iRemaning -= iHeaderLen;
+    }
+    /*------------------------------------------------------------------------------------------*/
+
+    // 3) Connection header
+    /*-------------------------------------- Connection header --------------------------------------*/
+    int iFoundConnectionHeader = 0;
+    int iRequestWantsClose     = 0;
+    int iRequestWantsKeepAlive = 0;
+
+    for (size_t i = 0; i < ri->m_headers.count; ++i)
+    {
+        const char* key   = ri->m_headers.entries[i].szKey;
+        const char* value = ri->m_headers.entries[i].szValue;
+        
+        if (!key || !value) continue;
+
+        if (strncasecmp(key, "Connection", 10) == 0)
+        {
+            iFoundConnectionHeader = 1;
+            if (strcasestr(value, "close"))      iRequestWantsClose = 1;
+            if (strcasestr(value, "keep-alive")) iRequestWantsKeepAlive = 1;
+        }
+    }
+
+    int iSendClose = 0;
+    if (iFoundConnectionHeader && iRequestWantsClose) iSendClose = 1;
+    else if (ri->m_szVersion && strcmp(ri->m_szVersion, "HTTP/1.0") == 0) // HTTP/1.0 defaults to close unless clinet explicityly asks keep-alive
+        { if (!iRequestWantsKeepAlive) iSendClose = 1; }
+
+    else iSendClose = 0; // HTTP/1.1 and above defauls to keep-alive
+
+    if (iSendClose) iWrote = snprintf(buffer + offset, iRemaning, "Connection: close\r\n");
+    else iWrote = snprintf(buffer + offset, iRemaning, "Connection: keep-alive\r\n");
+
+    if (iWrote < 0 || (size_t)iWrote >= iRemaning) return -1;
+    offset += iWrote;
+    iRemaning -= iWrote;     
+    /*------------------------------------------------------------------------------------------*/
+
+    /*4) Minimal Vary header if request advertised Accept-Encoding (helps caches)
+     * Only add when we actually compress; we don't compress here, but adding
+     * Vary unconditionally is not ideal. We'll add Vary only if client sent Accept-Encoding.
+    */
+    
+    /*-------------------------------------- Vary header --------------------------------------*/
+    for (size_t i = 0; i < ri->m_headers.count; ++i)
+    {
+        const char* key = ri->m_headers.entries[i].szKey;
+        if (!key) continue;
+        if (strncasecmp(key, "accept-encoding", 15) == 0)
+        {
+            iWrote = snprintf(buffer + offset, iRemaning, "Vary: Accept-Encoding\r\n");
+            if (iWrote < 0 || (size_t)iWrote >= iRemaning) return -1;
+            offset += (size_t)iWrote;
+            iRemaning -= (size_t)iWrote;
+            break;
+        }
+    }
+    /*------------------------------------------------------------------------------------------*/
+
+    return (size_t)offset;
+}
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+int write_final_crlf(REQUEST_INFO* ri, char* buffer, size_t iOffset)
+{
+    if (!ri || !buffer) return -1;
+    const char* finalCRLF = "\r\n";
+    
+    int iRemaning = (MAX_RESPONSE_HEADER_SIZE > iOffset) ? MAX_RESPONSE_HEADER_SIZE - iOffset : 0;
+    if (iRemaning == 0) return -1;
+
+    int offset = iOffset;
+    int iWrote;
+    
+    iWrote = snprintf(buffer + offset, iRemaning, "%s", finalCRLF);
+    if (iWrote < 0 || (size_t)iWrote >= iRemaning) return -1;
+    offset += (size_t)iWrote;
+
+    return offset;
 }

@@ -7,10 +7,10 @@
 #include <stddef.h>     // provides size_t
 #include <stdio.h>      // provides snprintf()
 #include <string.h>     // provides strcmp(), strncasecmp()
-#include <strings.h>
+#include <strings.h>    // provides strlen(), strncasecmp(), strcmp()
 #include <sys/socket.h> // provides send()
-#include "response.h"   // provides REQUEST_INFO
 #include <time.h>       // provides type time_t, struct tm, gmtime_r(), strftime()
+#include "response.h"   // provides REQUEST_INFO
 #include "http.h"       // provides REQUEST_INFO
 
 #define MAX_RESPONSE_HEADER_SIZE 4096

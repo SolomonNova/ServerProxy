@@ -1,5 +1,5 @@
+👉 https://github.com/user-attachments/assets/9fb3a37c-1787-48cb-bb70-4bbda6b43506
 
-[Watch Demo](https://github.com/SolomonNova/HTTP-Server/blob/main/assets/demo.mp4)
 # HTTP-Server
 
 A simple HTTP server implemented in C. It can handle multiple clients without using fork() for each request.

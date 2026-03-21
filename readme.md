@@ -1,4 +1,6 @@
-[Watch Demo](assets/demo.mp4)
+<video src="assets/demo.mp4" width="600" controls>
+  Your browser does not support the video tag.
+</video>
 
 # HTTP-Server
 

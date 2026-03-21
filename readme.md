@@ -1,3 +1,5 @@
+[Watch Demo](assets/demo.mp4)
+
 # HTTP-Server
 
 A simple HTTP server implemented in C. It can handle multiple clients without using fork() for each request.
@@ -22,4 +24,3 @@ cmake ..
 make
 ./server
 
-[Watch Demo](assets/demo.mp4)

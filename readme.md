@@ -1,7 +1,5 @@
-<video src="assets/demo.mp4" width="600" controls>
-  Your browser does not support the video tag.
-</video>
 
+[Watch Demo](https://github.com/SolomonNova/HTTP-Server/blob/main/assets/demo.mp4)
 # HTTP-Server
 
 A simple HTTP server implemented in C. It can handle multiple clients without using fork() for each request.
